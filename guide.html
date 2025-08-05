@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 4 Interactive Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .task-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .task-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        .code-block {
+            background-color: #1f2937;
+            color: #d1d5db;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4b5563;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .copy-btn:hover {
+            opacity: 1;
+        }
+        details > summary {
+            cursor: pointer;
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tab-button:not(.active) {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .pro-tip {
+            background-color: #eef2ff;
+            border-left: 4px solid #4f46e5;
+            padding: 1rem;
+            border-radius: 0.375rem;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Homework 4 Interactive Guide</h1>
+            <p class="text-lg text-gray-600 mt-2">VLM & CLIP for SuperTuxKart</p>
+        </header>
+
+        <!-- Introduction -->
+        <div class="task-card p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center"><i data-lucide="book-open" class="mr-2"></i>Introduction</h2>
+            <p class="text-gray-700 leading-relaxed">
+                Welcome to your guide for Homework 4! This assignment is your gateway into the exciting world of Vision-Language Models (VLMs). You'll get hands-on experience training two key types of models on data from the SuperTuxKart game:
+            </p>
+            <ul class="list-disc list-inside mt-4 space-y-2 text-gray-700">
+                <li>A <strong class="font-semibold text-blue-600">Generative VLM</strong> that answers questions about an image.</li>
+                <li>A <strong class="font-semibold text-indigo-600">Contrastive Model (CLIP)</strong> that learns to match images with text descriptions.</li>
+            </ul>
+            <p class="mt-4 text-gray-700">The primary focus is on building robust data pipelines—the foundation of any successful machine learning project.</p>
+        </div>
+
+        <!-- Setup Section -->
+        <div class="task-card p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center"><i data-lucide="settings-2" class="mr-2"></i>Initial Setup</h2>
+            <p class="text-gray-600 mb-4">Let's get your environment ready. Complete these steps before you begin.</p>
+            <div id="setup-checklist"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Part 1: VLM -->
+            <div class="task-card p-6">
+                <h2 class="text-2xl font-bold mb-2">Part 1: Fine-tuning a Generative VLM</h2>
+                <p class="text-gray-500 mb-4">(50 Points)</p>
+
+                <details class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <summary class="font-semibold flex justify-between items-center">
+                        <span>What is a Generative VLM?</span>
+                        <i data-lucide="chevron-down" class="transition-transform"></i>
+                    </summary>
+                    <div class="mt-2 text-gray-700">
+                        <p>A Vision-Language Model (VLM) is an AI that understands both images and text. A <strong>generative</strong> VLM, like the one in this part, creates new text from scratch. You give it an image and a question, and it generates a text-based answer, much like how you might describe a photo to a friend.</p>
+                    </div>
+                </details>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Your Task:</h3>
+                    <p>Your main objective is to create a large, high-quality dataset of question-answer (QA) pairs. The model's performance depends almost entirely on the quality of this data!</p>
+                </div>
+
+                <div class="tabs-container" data-tab-group="vlm">
+                    <div class="flex space-x-2 mb-4 border-b border-gray-200 pb-2">
+                        <button class="tab-button active" data-tab="vlm-1">1. Understand Data</button>
+                        <button class="tab-button" data-tab="vlm-2">2. Generate & Verify</button>
+                        <button class="tab-button" data-tab="vlm-3">3. Train</button>
+                    </div>
+                    <div id="vlm-1" class="tab-content active">
+                        <h4 class="font-semibold text-lg mb-2">Implement Data Generation</h4>
+                        <p class="mb-4">Your goal is to complete the functions in <code class="bg-gray-200 text-sm p-1 rounded">homework/generate_qa.py</code> to automatically create a dataset.</p>
+                        
+                        <div id="generate-qa-code" class="code-viewer mb-4"></div>
+
+                        <div class="space-y-3">
+                            <p><strong>Functions to Implement:</strong></p>
+                            <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">extract_track_info(info_path)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> Load the JSON file and find the 'track' key. The value is the track name.</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">extract_kart_objects(...)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> Iterate through detections for the given `view_index`. Filter for karts (class_id 1). Calculate the center of each kart's bounding box. Find the "ego" car (track_id 0).</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">generate_qa_pairs(...)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> Use the helper functions above to get kart and track data. Then, systematically create questions for the 5 types specified in the README.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="vlm-2" class="tab-content">
+                        <h4 class="font-semibold text-lg mb-2">Test Your Script</h4>
+                        <p class="mb-4">As you code, use this command to visualize the bounding boxes and see the QA pairs your script generates for a single image. This makes debugging much easier!</p>
+                        <div id="vlm-verify-command"></div>
+                    </div>
+                    <div id="vlm-3" class="tab-content">
+                        <h4 class="font-semibold text-lg mb-2">Train the VLM</h4>
+                        <p class="mb-4">Once you've generated a large <code class="bg-gray-200 text-sm p-1 rounded">..._qa_pairs.json</code> file in the <code class="bg-gray-200 text-sm p-1 rounded">data/train/</code> directory, you're ready to train.</p>
+                         <div id="vlm-train-command"></div>
+                        <div class="pro-tip mt-4">
+                            <p class="font-bold flex items-center"><i data-lucide="lightbulb" class="mr-2 h-4 w-4"></i>Pro Tip</p>
+                            <p class="text-sm text-indigo-800">Do NOT train your model on the validation data. This will lead to an inflated validation score and your model will likely fail on the hidden test set used for grading.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part 2: CLIP -->
+            <div class="task-card p-6">
+                <h2 class="text-2xl font-bold mb-2">Part 2: Building a CLIP Model</h2>
+                <p class="text-gray-500 mb-4">(50 Points)</p>
+
+                <details class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <summary class="font-semibold flex justify-between items-center">
+                        <span>What is a CLIP Model?</span>
+                        <i data-lucide="chevron-down" class="transition-transform"></i>
+                    </summary>
+                    <div class="mt-2 text-gray-700">
+                        <p>CLIP (Contrastive Language-Image Pre-training) also understands images and text, but it works differently. Instead of generating text, it learns to "match" an image to its correct text description from a set of options.</p>
+                        <p class="mt-2">It does this by learning to map similar image-text pairs close together in a high-dimensional space (we call these mappings "embeddings"). The "contrastive" part means it learns by contrasting correct pairs against incorrect ones.</p>
+                    </div>
+                </details>
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Your Task:</h3>
+                    <p>You will implement a simplified CLIP model from scratch, create a dataset of image-caption pairs, and train it for multi-choice QA.</p>
+                </div>
+                
+                <div class="tabs-container" data-tab-group="clip">
+                    <div class="flex space-x-2 mb-4 border-b border-gray-200 pb-2">
+                        <button class="tab-button active" data-tab="clip-1">1. Generate Captions</button>
+                        <button class="tab-button" data-tab="clip-2">2. Implement Model</button>
+                        <button class="tab-button" data-tab="clip-3">3. Train</button>
+                    </div>
+                    <div id="clip-1" class="tab-content active">
+                        <h4 class="font-semibold text-lg mb-2">Create a Caption Dataset</h4>
+                        <p class="mb-4">First, implement the <code class="bg-gray-200 text-sm p-1 rounded">generate_caption</code> function in <code class="bg-gray-200 text-sm p-1 rounded">homework/generate_captions.py</code>.</p>
+                        <div id="generate-captions-code" class="code-viewer mb-4"></div>
+                        <p class="text-sm text-gray-600"><strong>Hint:</strong> A good caption is a descriptive sentence about the image, e.g., "The ego car is tux and it is on the snowmountain track."</p>
+                    </div>
+                    <div id="clip-2" class="tab-content">
+                        <h4 class="font-semibold text-lg mb-2">Implement the CLIP Model</h4>
+                        <p class="mb-4">This is the core of Part 2. You need to fill in the missing code in <code class="bg-gray-200 text-sm p-1 rounded">homework/clip.py</code>.</p>
+                        <div id="clip-code" class="code-viewer mb-4"></div>
+                        <div class="space-y-3">
+                             <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">CLIP.__init__(...)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> You need to define two linear layers (`nn.Linear`) to act as "projection heads". One projects the vision features and the other projects the text features into a shared embedding space of size `proj_dim`.</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">CLIP.forward(...)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> Get features from the vision and text encoders. Pass them through your new projection heads. Normalize the resulting features using `F.normalize(features, p=2, dim=-1)`. This is crucial for stable training!</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-md border">
+                                <p><code class="font-mono font-semibold">compute_clip_loss(...)</code></p>
+                                <p class="text-sm text-gray-600"><strong>Hint:</strong> This is the key part.
+                                <br>1. Calculate the cosine similarity between all image and text embeddings in the batch. This is a matrix multiplication: `logits = image_features @ text_features.T`.
+                                <br>2. Scale the logits by `torch.exp(temperature)`.
+                                <br>3. The ground truth labels are just the indices of the correct pairs, which is `torch.arange(batch_size)`.
+                                <br>4. Calculate the loss in both directions (image-to-text and text-to-image) using `nn.CrossEntropyLoss`.
+                                <br>5. The total loss is the average of these two losses.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="clip-3" class="tab-content">
+                        <h4 class="font-semibold text-lg mb-2">Train the CLIP Model</h4>
+                        <p class="mb-4">After implementing the model and generating your caption dataset, you can train it with this command.</p>
+                        <div id="clip-train-command"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submission Section -->
+        <div class="task-card p-6 mt-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center"><i data-lucide="send" class="mr-2"></i>Submission</h2>
+            <p class="text-gray-600 mb-4">You're almost there! Follow these final steps to submit your work.</p>
+            <div id="submission-checklist"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const fileContents = {
+            "requirements.txt": `torch==2.6.0\ntorchvision==0.21.0\ntransformers==4.52.4\npeft==0.16.0\npillow>=9.0.0\ntqdm>=4.65.0\nfire>=0.5.0\nnumpy>=1.24.0\nmatplotlib>=3.7.0\nopencv-python>=4.12.0\ntensorboard>=2.15.0`,
+            "generate_qa.py": `import json\nfrom pathlib import Path\n\nimport fire\nimport matplotlib.pyplot as plt\nimport numpy as np\nfrom PIL import Image, ImageDraw\n\n# ... (rest of the file content) ...\n\ndef extract_kart_objects(\n    info_path: str, view_index: int, img_width: int = 150, img_height: int = 100, min_box_size: int = 5\n) -> list:\n    """\n    Extract kart objects from the info.json file...\n    """\n\n    raise NotImplementedError("Not implemented")\n\n\ndef extract_track_info(info_path: str) -> str:\n    """\n    Extract track information from the info.json file.\n    """\n\n    raise NotImplementedError("Not implemented")\n\n\ndef generate_qa_pairs(info_path: str, view_index: int, img_width: int = 150, img_height: int = 100) -> list:\n    """\n    Generate question-answer pairs for a given view.\n    """\n\n    raise NotImplementedError("Not implemented")\n\n# ... (rest of the file content) ...`,
+            "generate_captions.py": `from pathlib import Path\n\nimport fire\nfrom matplotlib import pyplot as plt\n\nfrom .generate_qa import draw_detections, extract_frame_info\n\ndef generate_caption(info_path: str, view_index: int, img_width: int = 150, img_height: int = 100) -> list:\n    """\n    Generate caption for a specific view.\n    """\n    # 1. Ego car\n    # {kart_name} is the ego car.\n\n    # 2. Counting\n    # There are {num_karts} karts in the scenario.\n\n    # 3. Track name\n    # The track is {track_name}.\n\n    # 4. Relative position\n    # {kart_name} is {position} of the ego car.\n\n    raise NotImplementedError("Not implemented")\n\n# ... (rest of the file content) ...`,
+            "clip.py": `from pathlib import Path\nfrom typing import Any\n\nimport torch\nimport torch.nn as nn\nimport torchvision as tv\nfrom peft import LoraConfig, TaskType, get_peft_model\nfrom PIL import Image\nfrom torch.utils.data import Dataset\nfrom torch.utils.tensorboard import SummaryWriter\nfrom transformers import AutoProcessor, Trainer, TrainingArguments\n\nfrom .base_vlm import BaseVLM\nfrom .data import CaptionDataset, MultiChoiceQADataset\n\n# ... (rest of the file content) ...\n\nclass CLIP(nn.Module):\n    def __init__(\n        self, vision_encoder: nn.Module, text_encoder: nn.Module, proj_dim: int = 64, temperature: float = 0.07\n    ):\n        super().__init__()\n        self.vision_encoder = vision_encoder\n        self.text_encoder = text_encoder\n        # TODO: implement the rest components\n        raise NotImplementedError("Not implemented")\n\n    # ...\n\n    def forward(\n        self,\n        pixel_values: torch.Tensor,\n        input_ids: torch.Tensor,\n        attention_mask: torch.Tensor = None,\n        labels: torch.Tensor = None,\n        **kwargs,\n    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:\n        """\n        Forward pass for the CLIP model.\n        """\n        raise NotImplementedError("Not implemented")\n\n\ndef compute_clip_loss(\n    outputs: tuple[torch.Tensor, torch.Tensor, torch.Tensor],\n    labels: torch.Tensor,\n    num_items_in_batch: int | None = None,\n) -> torch.Tensor:\n    """\n    Compute the loss for the CLIP model.\n    """\n    raise NotImplementedError("Not implemented")\n\n# ... (rest of the file content) ...`
+        };
+
+        const setupChecklist = [
+            { id: 'setup-1', text: 'Download and unzip the data', code: 'wget https://utexas.box.com/shared/static/qubjm5isldqvyimfj9rsmbnvnbezwcv4.zip -O supertux_data.zip\\nunzip supertux_data.zip' },
+            { id: 'setup-2', text: 'Install Python dependencies', code: 'pip install -r requirements.txt' }
+        ];
+
+        const submissionChecklist = [
+            { id: 'sub-1', text: 'Delete old checkpoints to stay under 50MB.' },
+            { id: 'sub-2', text: 'Bundle your homework directory.', code: 'python3 bundle.py homework [YOUR UT ID]' },
+            { id: 'sub-3', text: 'Verify the generated .zip file.', code: 'python3 -m grader [YOUR UT ID].zip' },
+            { id: 'sub-4', text: 'Submit the .zip file on Canvas.' }
+        ];
+
+        function createCodeBlock(content, id) {
+            const container = document.createElement('div');
+            container.className = 'relative';
+            const pre = document.createElement('pre');
+            pre.className = 'code-block';
+            const code = document.createElement('code');
+            code.textContent = content;
+            pre.appendChild(code);
+            
+            const button = document.createElement('button');
+            button.className = 'copy-btn';
+            button.innerHTML = `<i data-lucide="copy" class="h-4 w-4"></i>`;
+            button.onclick = () => copyToClipboard(content, button);
+
+            container.appendChild(pre);
+            container.appendChild(button);
+            return container;
+        }
+
+        function createChecklistItem(item) {
+            const container = document.createElement('div');
+            container.className = 'checklist-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = item.id;
+            checkbox.className = 'h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3';
+            
+            const label = document.createElement('label');
+            label.htmlFor = item.id;
+            label.className = 'flex-grow';
+            label.textContent = item.text;
+
+            container.appendChild(checkbox);
+            container.appendChild(label);
+            
+            if (item.code) {
+                const codeContainer = document.createElement('div');
+                codeContainer.className = 'mt-2';
+                codeContainer.appendChild(createCodeBlock(item.code));
+                label.appendChild(codeContainer);
+            }
+            return container;
+        }
+
+        function copyToClipboard(text, button) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            // Use execCommand as a fallback for iframe environments
+            try {
+                document.execCommand('copy');
+                button.innerHTML = `<i data-lucide="check" class="h-4 w-4"></i>`;
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                button.innerHTML = `<i data-lucide="x" class="h-4 w-4"></i>`;
+            }
+            document.body.removeChild(el);
+            setTimeout(() => {
+                button.innerHTML = `<i data-lucide="copy" class="h-4 w-4"></i>`;
+            }, 2000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render checklists
+            const setupContainer = document.getElementById('setup-checklist');
+            setupChecklist.forEach(item => setupContainer.appendChild(createChecklistItem(item)));
+            
+            const submissionContainer = document.getElementById('submission-checklist');
+            submissionChecklist.forEach(item => submissionContainer.appendChild(createChecklistItem(item)));
+
+            // Render code viewers
+            document.getElementById('generate-qa-code').appendChild(createCodeBlock(fileContents['generate_qa.py']));
+            document.getElementById('generate-captions-code').appendChild(createCodeBlock(fileContents['generate_captions.py']));
+            document.getElementById('clip-code').appendChild(createCodeBlock(fileContents['clip.py']));
+            
+            // Render commands
+            document.getElementById('vlm-verify-command').appendChild(createCodeBlock('python -m homework.generate_qa check --info_file data/valid/00000_info.json --view_index 0'));
+            document.getElementById('vlm-train-command').appendChild(createCodeBlock('python -m homework.finetune train'));
+            document.getElementById('clip-train-command').appendChild(createCodeBlock('python -m homework.clip train'));
+
+            // Init Lucide icons
+            lucide.createIcons();
+
+            // Tab functionality
+            const tabContainers = document.querySelectorAll('.tabs-container');
+            tabContainers.forEach(container => {
+                const group = container.dataset.tabGroup;
+                const buttons = container.querySelectorAll('.tab-button');
+                const contents = container.querySelectorAll('.tab-content');
+
+                buttons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        buttons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+
+                        const tabId = button.dataset.tab;
+                        contents.forEach(content => {
+                            if (content.id === tabId) {
+                                content.classList.add('active');
+                            } else {
+                                content.classList.remove('active');
+                            }
+                        });
+                    });
+                });
+            });
+
+            // Details/summary icon rotation
+            const detailsElements = document.querySelectorAll('details');
+            detailsElements.forEach(details => {
+                details.addEventListener('toggle', () => {
+                    const icon = details.querySelector('i[data-lucide="chevron-down"]');
+                    if (details.open) {
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

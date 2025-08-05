@@ -1,0 +1,7 @@
+data/train/
+data/valid/
+supertux_data.zip
+homework/_pycache/
+homework/demo_train/
+__pycache__/
+*.pyc
