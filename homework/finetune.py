@@ -7,6 +7,8 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoProcessor, Trainer, TrainingArguments
+# Import the utility to find the last checkpoint
+from transformers.trainer_utils import get_last_checkpoint
 
 from .base_vlm import BaseVLM
 from .data import VQADataset, benchmark
@@ -202,8 +204,15 @@ def train(
         data_collator=custom_data_collator,
     )
 
-    # Train the model
-    trainer.train()
+    # --- START OF CHANGE ---
+    # Find the last checkpoint if it exists
+    last_checkpoint = get_last_checkpoint(training_args.output_dir)
+    if last_checkpoint:
+        print(f"Resuming training from checkpoint: {last_checkpoint}")
+
+    # Train the model, resuming from the latest checkpoint
+    trainer.train(resume_from_checkpoint=last_checkpoint)
+    # --- END OF CHANGE ---
 
     # Save the model
     trainer.save_model(output_dir)
