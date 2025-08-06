@@ -160,41 +160,48 @@ def extract_kart_objects(
         return kart_objects
 
     detections = info["detections"][view_index]
+
     # The list of kart names acts as a map where the index is the instance_id
     kart_names_list = info["karts"]
+    #["puffy", "hexley", "tux", "suzanne", "pidgin", "nolok", "beastie", "gavroche", "amanda", "adiumy"],
 
     # Scale factors
     scale_x = img_width / ORIGINAL_WIDTH
     scale_y = img_height / ORIGINAL_HEIGHT
 
     for detection in detections:
+        # print(detection)
         class_id, track_id, x1, y1, x2, y2 = detection
         class_id = int(class_id)
         track_id = int(track_id)
 
+        # print(f"class_id: {class_id}, track_id: {track_id}")
         if class_id == 1:  # Kart class
-            # Scale and calculate center
             x1_s, y1_s = int(x1 * scale_x), int(y1 * scale_y)
             x2_s, y2_s = int(x2 * scale_x), int(y2 * scale_y)
-            
-            # Filter out karts that are too small or out of bounds
+
             if (x2_s - x1_s) < min_box_size or (y2_s - y1_s) < min_box_size:
+                # print(f"Skipping small detection: {detection}")
                 continue
             if x2_s < 0 or x1_s > img_width or y2_s < 0 or y1_s > img_height:
+                # print(f"Skipping out of bounds detection: {detection}")
                 continue
-            
-            # Get the kart name using its track_id as an index into the list
+
             kart_name = kart_names_list[track_id] if track_id < len(kart_names_list) else f"unknown_kart_{track_id}"
             center_x = (x1 + x2) / 2
             center_y = (y1 + y2) / 2
+
+            is_ego = kart_name == info["karts"][view_index]
 
             kart_objects.append({
                 "instance_id": track_id,
                 "kart_name": kart_name,
                 "center": (center_x, center_y),
-                # The ego kart is the one with track_id 0
-                "is_ego_kart": track_id == 0
+                "is_ego_kart": is_ego
             })
+
+    # print(f"Extracted {len(kart_objects)} kart objects from view {view_index}.")
+
             
     return kart_objects
 
@@ -318,14 +325,14 @@ def check_qa_pairs(info_file: str, view_index: int):
     image_file = list(info_path.parent.glob(f"{base_name}_{view_index:02d}_im.jpg"))[0]
 
     # Visualize detections
-    annotated_image = draw_detections(str(image_file), info_file)
+    # annotated_image = draw_detections(str(image_file), info_file)
 
     # Display the image
-    plt.figure(figsize=(12, 8))
-    plt.imshow(annotated_image)
-    plt.axis("off")
-    plt.title(f"Frame {extract_frame_info(str(image_file))[0]}, View {view_index}")
-    plt.show()
+    # plt.figure(figsize=(12, 8))
+    # plt.imshow(annotated_image)
+    # plt.axis("off")
+    # plt.title(f"Frame {extract_frame_info(str(image_file))[0]}, View {view_index}")
+    # plt.show()
 
     # Generate QA pairs
     qa_pairs = generate_qa_pairs(info_file, view_index)

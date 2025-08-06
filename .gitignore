@@ -5,4 +5,4 @@ homework/_pycache/
 homework/demo_train/
 __pycache__/
 *.pyc
-homework/vlm_sft/
+homework/data/
