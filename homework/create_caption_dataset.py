@@ -7,6 +7,7 @@ def create_full_caption_dataset():
     """
     Generates a full caption dataset by iterating through all
     info files and views in the training data directory.
+    For each image, it creates as many pairs as there are captions returned.
     """
     base_data_dir = Path(__file__).parent.parent / 'data'
     train_dir = base_data_dir / 'train'
@@ -22,25 +23,28 @@ def create_full_caption_dataset():
         return
 
     all_caption_pairs = []
-    
+
     print(f"Found {len(info_files)} info files. Processing all views...")
     for info_path in tqdm(info_files, desc="Processing info files"):
         base_name = info_path.stem.replace("_info", "")
-        
+
         for view_index in range(10):
             image_file_name = f"train/{base_name}_{view_index:02d}_im.jpg"
-            
-            # generate_caption returns a list, we just want the string inside
-            captions = generate_caption(str(info_path), view_index)
-            if captions:
+
+            # generate_caption returns a list[str]; create one pair per sentence
+            sentences = generate_caption(str(info_path), view_index) or []
+            for s in sentences:
+                s = (s or "").strip()
+                if not s:
+                    continue
                 all_caption_pairs.append({
                     'image_file': image_file_name,
-                    'caption': captions[0]
+                    'caption': s
                 })
 
     print(f"\nGenerated a total of {len(all_caption_pairs)} image-caption pairs.")
-    with open(output_file, 'w') as f:
-        json.dump(all_caption_pairs, f, indent=2)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(all_caption_pairs, f, indent=2, ensure_ascii=False)
 
     print(f"Successfully saved the dataset to {output_file}")
 

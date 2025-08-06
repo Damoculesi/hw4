@@ -3,7 +3,6 @@ from typing import Any
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision as tv
 from peft import LoraConfig, TaskType, get_peft_model
 from PIL import Image
@@ -102,21 +101,8 @@ class CLIP(nn.Module):
         super().__init__()
         self.vision_encoder = vision_encoder
         self.text_encoder = text_encoder
-        
-        # --- IMPLEMENTATION START ---
-        # Get the hidden size from the encoders' configs to know the input dimension for our projection layers.
-        vision_hidden_size = vision_encoder.config.hidden_size
-        text_hidden_size = text_encoder.config.hidden_size
-
-        # Create "projection heads". These are linear layers that map the high-dimensional
-        # features from the vision and text encoders into a shared, lower-dimensional embedding space.
-        self.vision_projection = nn.Linear(vision_hidden_size, proj_dim, bias=False)
-        self.text_projection = nn.Linear(text_hidden_size, proj_dim, bias=False)
-        
-        # The temperature is a learnable parameter that scales the logits (similarity scores).
-        # A higher temperature makes the probability distribution softer, while a lower temperature makes it sharper.
-        self.temperature = nn.Parameter(torch.tensor(temperature))
-        # --- IMPLEMENTATION END ---
+        # TODO: implement the rest components
+        raise NotImplementedError("Not implemented")
 
     def encode_image(self, image: torch.Tensor) -> torch.Tensor:
         return self.vision_encoder(image)
@@ -154,6 +140,10 @@ class CLIP(nn.Module):
             param.requires_grad = True
 
     def gradient_checkpointing_enable(self, **kwargs):
+        """
+        Enable gradient checkpointing for the vision and text backbones.
+        (You don't need to touch this method)
+        """
         self.vision_encoder.gradient_checkpointing_enable(**kwargs)
         self.text_encoder.gradient_checkpointing_enable(**kwargs)
 
@@ -180,32 +170,17 @@ class CLIP(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass for the CLIP model.
+        Args:
+            pixel_values: The pixel values of the image.
+            input_ids: The input ids of the text.
+            attention_mask: The attention mask of the text.
+            labels: The labels for the text features.
+            (NOTE: you don't need to use the variable `labels`, this is just for compatibility with the Trainer class)
+            (Hint: refer to returned values of the __getitem__ method in the CaptionDatasetForTraining class)
+        Returns:
+            TODO: think about the what values should be returned
         """
-        # --- IMPLEMENTATION START ---
-        # 1. Get image features from the vision encoder.
-        # The output object contains various states; we want the `last_hidden_state`.
-        vision_outputs = self.vision_encoder(pixel_values=pixel_values, return_dict=True)
-        # We take the features corresponding to the special [CLS] token (at index 0),
-        # which is trained to represent the aggregate meaning of the entire image.
-        image_features = vision_outputs.last_hidden_state[:, 0, :]
-
-        # 2. Get text features from the text encoder.
-        text_outputs = self.text_encoder(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
-        # For text, we often take the features of the last token as a summary of the sentence.
-        text_features = text_outputs.last_hidden_state[:, -1, :]
-
-        # 3. Project the raw features into the shared embedding space using our linear layers.
-        image_embeds = self.vision_projection(image_features)
-        text_embeds = self.text_projection(text_features)
-
-        # 4. Normalize the embeddings to have a unit length (L2 norm).
-        # This is a critical step! It means the dot product between embeddings will directly equal their cosine similarity.
-        image_embeds = F.normalize(image_embeds, p=2, dim=-1)
-        text_embeds = F.normalize(text_embeds, p=2, dim=-1)
-        
-        # Return the final, normalized embeddings and the learnable temperature.
-        return image_embeds, text_embeds, self.temperature
-        # --- IMPLEMENTATION END ---
+        raise NotImplementedError("Not implemented")
 
 
 def compute_clip_loss(
@@ -214,38 +189,23 @@ def compute_clip_loss(
     num_items_in_batch: int | None = None,
 ) -> torch.Tensor:
     """
-    Compute the contrastive loss for the CLIP model.
+    Compute the loss for the CLIP model.
+    Args:
+        outputs: A tuple containing the outputs of CLIP.forward().
+        labels: The labels for the text features.
+        (NOTE: you don't need to use the variable `labels`, this is just for compatibility with the Trainer class)
+        num_items_in_batch: The number of items in the batch.
+        (NOTE: you don't need to use the variable `num_items_in_batch`, this is just for compatibility with Trainer)
+    Returns:
+        The loss for the CLIP model.
     """
-    # --- IMPLEMENTATION START ---
-    image_embeds, text_embeds, temperature = outputs
-    
-    # Calculate the cosine similarity between every image and every text in the batch.
-    # This is done with a single matrix multiplication. The result is a (batch_size x batch_size) matrix.
-    # The temperature scales these similarity scores (logits).
-    logits = torch.matmul(image_embeds, text_embeds.t()) * torch.exp(temperature)
-
-    # The ground truth is that the i-th image corresponds to the i-th text.
-    # This means our labels are the indices of the diagonal of the logits matrix: [0, 1, 2, ...].
-    batch_size = image_embeds.shape[0]
-    ground_truth = torch.arange(batch_size, device=logits.device)
-    
-    # The core of contrastive learning: Calculate the cross-entropy loss.
-    # We do this from two perspectives:
-    # 1. For each image, which text is the correct one? (loss_img)
-    # 2. For each text, which image is the correct one? (loss_txt)
-    loss_img = F.cross_entropy(logits, ground_truth)
-    loss_txt = F.cross_entropy(logits.t(), ground_truth)
-    
-    # The total loss is the average of these two, making it a symmetric loss.
-    total_loss = (loss_img + loss_txt) / 2.0
-    
-    return total_loss
-    # --- IMPLEMENTATION END ---
+    raise NotImplementedError("Not implemented")
 
 
 def get_target_modules_for_lora(model: nn.Module) -> list[str]:
     target_modules = []
     for name, module in model.named_modules():
+        # if isinstance(module, nn.Linear) and ("vision_encoder" in name and "projection" not in name):
         if (
             isinstance(module, nn.Linear)
             and ("vision_encoder" in name or "text_encoder" in name)
@@ -259,9 +219,9 @@ def get_target_modules_for_lora(model: nn.Module) -> list[str]:
 def train(
     data_dir: Path | None = None,
     output_dir: str = "clip",
-    num_train_epochs: float = 3.0,  # for debugging purpose, increase this once the dry run works
-    per_device_train_batch_size: int = 128,
-    gradient_accumulation_steps: int = 4,
+    num_train_epochs: float = 0.05,  # for debugging purpose, increase this once the dry run works
+    per_device_train_batch_size: int = 1024,
+    gradient_accumulation_steps: int = 1,
     learning_rate: float = 5e-4,
     num_workers: int = 16,
 ):
@@ -275,6 +235,7 @@ def train(
     tensorboard_dir.mkdir(exist_ok=True)
     writer = SummaryWriter(log_dir=tensorboard_dir)
 
+    # Initialize model and processor
     vision_encoder = vlm.model.model.vision_model
     text_encoder = vlm.model.model.text_model
     model = CLIP(vision_encoder, text_encoder).to(device).bfloat16()
@@ -286,6 +247,7 @@ def train(
         r=8,
         lora_alpha=32,
         lora_dropout=0.0,
+        # target_modules="all-linear",
         target_modules=get_target_modules_for_lora(model),
         bias="none",
     )
@@ -296,6 +258,7 @@ def train(
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
 
+    # load dataset
     train_dataset = CaptionDataset("train", data_dir)
     train_dataset = CaptionDatasetForTraining(train_dataset, processor)
 
@@ -322,6 +285,7 @@ def train(
         args=training_args,
         train_dataset=train_dataset,
         data_collator=clip_data_collator,
+        compute_loss_func=compute_clip_loss,
     )
 
     trainer.train()
