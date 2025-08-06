@@ -3,9 +3,9 @@ from pathlib import Path
 import fire
 from matplotlib import pyplot as plt
 
-from .generate_qa import draw_detections, extract_frame_info
+from .generate_qa import draw_detections, extract_frame_info, extract_kart_objects, extract_track_info
 
-
+#TODO
 def generate_caption(info_path: str, view_index: int, img_width: int = 150, img_height: int = 100) -> list:
     """
     Generate caption for a specific view.
@@ -22,7 +22,47 @@ def generate_caption(info_path: str, view_index: int, img_width: int = 150, img_
     # 4. Relative position
     # {kart_name} is {position} of the ego car.
 
-    raise NotImplementedError("Not implemented")
+    karts = extract_kart_objects(info_path, view_index, img_width, img_height)
+    track_name = extract_track_info(info_path)
+    
+    if not karts:
+        return [f"An empty scene on the {track_name} track."]
+
+    ego_kart = next((k for k in karts if k["is_ego_kart"]), None)
+    other_karts = [k for k in karts if not k.get("is_ego_kart", False)]
+
+    caption_parts = []
+
+    # 1. Ego car
+    if ego_kart:
+        caption_parts.append(f"{ego_kart['kart_name']} is the ego car.")
+    
+    # 2. Track name
+    caption_parts.append(f"The track is {track_name}.")
+
+    # 3. Counting
+    num_karts = len(karts)
+    if num_karts == 1:
+        caption_parts.append("There is 1 kart in the scene.")
+    else:
+        caption_parts.append(f"There are {num_karts} karts in the scene.")
+
+    # 4. Relative position of one other kart (if available)
+    if ego_kart and other_karts:
+        # Describe the closest other kart for variety
+        closest_kart = min(other_karts, key=lambda k: 
+            ((k['center'][0] - ego_kart['center'][0])**2 + (k['center'][1] - ego_kart['center'][1])**2)**0.5
+        )
+        
+        other_center_x, other_center_y = closest_kart['center']
+        ego_center_x, ego_center_y = ego_kart['center']
+        
+        horizontal = "right" if other_center_x > ego_center_x else "left"
+        vertical = "front" if other_center_y < ego_center_y else "behind"
+        
+        caption_parts.append(f"{closest_kart['kart_name']} is to the {vertical} and {horizontal} of the ego car.")
+
+    return [" ".join(caption_parts)]
 
 
 def check_caption(info_file: str, view_index: int):
