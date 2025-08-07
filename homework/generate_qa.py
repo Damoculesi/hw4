@@ -1,3 +1,5 @@
+# used gemini and chatgpt to help with the code
+
 import json
 from pathlib import Path
 

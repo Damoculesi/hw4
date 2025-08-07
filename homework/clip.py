@@ -1,3 +1,4 @@
+# used deepseek to help with the code
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ import torchvision as tv
 from peft import LoraConfig, TaskType, get_peft_model
 from PIL import Image
 from torch.utils.data import Dataset
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoProcessor, Trainer, TrainingArguments
 
@@ -102,7 +104,15 @@ class CLIP(nn.Module):
         self.vision_encoder = vision_encoder
         self.text_encoder = text_encoder
         # TODO: implement the rest components
-        raise NotImplementedError("Not implemented")
+                # Projection layers
+        vision_hidden_size = vision_encoder.config.hidden_size
+        text_hidden_size = text_encoder.config.hidden_size
+        self.vision_proj = nn.Linear(vision_hidden_size, proj_dim, bias=False)
+        self.text_proj = nn.Linear(text_hidden_size, proj_dim, bias=False)
+        
+        # Logit scale (temperature) as learnable parameter
+        self.logit_scale = nn.Parameter(torch.tensor(1 / temperature).log())
+
 
     def encode_image(self, image: torch.Tensor) -> torch.Tensor:
         return self.vision_encoder(image)
@@ -180,7 +190,31 @@ class CLIP(nn.Module):
         Returns:
             TODO: think about the what values should be returned
         """
-        raise NotImplementedError("Not implemented")
+        vision_outputs = self.vision_encoder(pixel_values=pixel_values)
+        image_features = vision_outputs.last_hidden_state[:, 0, :]  # CLS token
+        
+        # Text features (pooled output)
+        text_outputs = self.text_encoder(
+            input_ids=input_ids, 
+            attention_mask=attention_mask
+        )
+        text_features = text_outputs.last_hidden_state
+        text_features = text_features[torch.arange(text_features.size(0)), 
+                                     attention_mask.sum(dim=-1) - 1]  # Last token position
+        
+        # Project to common space
+        image_embeds = self.vision_proj(image_features)
+        text_embeds = self.text_proj(text_features)
+        
+        # Normalize
+        image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True)
+        text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
+        
+        # Compute logits
+        logit_scale = self.logit_scale.exp()
+        logits_per_image = logit_scale * image_embeds @ text_embeds.t()
+        
+        return image_embeds, text_embeds, logits_per_image
 
 
 def compute_clip_loss(
@@ -199,7 +233,18 @@ def compute_clip_loss(
     Returns:
         The loss for the CLIP model.
     """
-    raise NotImplementedError("Not implemented")
+    _, _, logits_per_image = outputs
+    batch_size = logits_per_image.shape[0]
+    
+    # Create ground truth labels (diagonal elements)
+    ground_truth = torch.arange(batch_size, device=logits_per_image.device)
+    
+    # Symmetric cross entropy loss
+    loss_img = F.cross_entropy(logits_per_image, ground_truth)
+    loss_txt = F.cross_entropy(logits_per_image.t(), ground_truth)
+    loss = (loss_img + loss_txt) / 2
+    
+    return loss
 
 
 def get_target_modules_for_lora(model: nn.Module) -> list[str]:
@@ -219,9 +264,9 @@ def get_target_modules_for_lora(model: nn.Module) -> list[str]:
 def train(
     data_dir: Path | None = None,
     output_dir: str = "clip",
-    num_train_epochs: float = 0.05,  # for debugging purpose, increase this once the dry run works
-    per_device_train_batch_size: int = 1024,
-    gradient_accumulation_steps: int = 1,
+    num_train_epochs: float = 2.0,  # for debugging purpose, increase this once the dry run works
+    per_device_train_batch_size: int = 256,
+    gradient_accumulation_steps: int = 4,
     learning_rate: float = 5e-4,
     num_workers: int = 16,
 ):
